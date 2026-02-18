@@ -1,0 +1,27 @@
+{
+  "globalDependencies": ["**/.env.local"],
+  "globalEnv": ["NODE_ENV"],
+  "tasks": {
+    "type-check": {
+      "outputs": [],
+      "cache": false
+    },
+    "lint": {
+      "outputs": [],
+      "cache": false
+    },
+    "build": {
+      "outputs": ["dist/**", ".next/**"],
+      "cache": true,
+      "dependsOn": ["^build"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

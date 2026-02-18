@@ -1,0 +1,6 @@
+{
+  "extends": "@farm-link/eslint-config",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}

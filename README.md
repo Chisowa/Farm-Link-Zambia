@@ -1,6 +1,6 @@
-# The Hytel Way: Monorepo Stack
+# Farm-Link Zambia: Agricultural Advisory Platform
 
-A production-ready monorepo template featuring React, TypeScript, Tailwind CSS, Shadcn UI, tRPC, and TanStack Query. Built with pnpm and Turborepo for optimal developer experience.
+A production-ready monorepo for Farm-Link Zambia, featuring React, TypeScript, Tailwind CSS, Shadcn UI, tRPC, and TanStack Query, with Google Cloud integration for RAG-powered agricultural advice. Built with pnpm and Turborepo for optimal developer experience.
 
 ## Stack Overview
 
@@ -21,7 +21,7 @@ Think of building a web app like putting on a theater production!
 
 ## Monorepo Structure
 
-```
+```markdown
 ├── .github/
 │   ├── workflows/        # CI/CD pipelines (ready to use!)
 │   ├── CODEOWNERS        # Auto-assign reviewers

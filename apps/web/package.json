@@ -12,14 +12,22 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.3.4",
     "@repo/functions": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
     "@trpc/client": "^11.0.0-rc.660",
     "@trpc/react-query": "^11.0.0-rc.660",
+    "clsx": "^2.1.1",
+    "firebaseui": "^6.1.0",
+    "next-themes": "^0.2.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.51.3",
+    "tailwind-merge": "^2.3.0",
+    "tailwindcss-animate": "^1.0.7",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@repo/config": "workspace:*",

@@ -15,7 +15,7 @@ interface AdviceRecord {
   responseText: string
   sourcedDocuments: string[]
   feedback?: 'helpful' | 'not_helpful'
-  createdAt: Date
+  createdAt: Date | string
 }
 
 export default function Dashboard() {

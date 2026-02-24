@@ -1,6 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default function Landing() {
+interface LandingProps {
+  onGetStarted: () => void
+}
+
+export default function Landing({ onGetStarted }: LandingProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
       {/* Navigation */}
@@ -36,10 +40,18 @@ export default function Landing() {
               to your farm's needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <button className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg rounded-md">
+              <button
+                onClick={onGetStarted}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-6 text-lg rounded-md"
+              >
                 Get Started Free
               </button>
-              <button className="border border-green-600 text-green-600 hover:bg-green-50 px-8 py-6 text-lg rounded-md">
+              <button
+                onClick={() =>
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })
+                }
+                className="border border-green-600 text-green-600 hover:bg-green-50 px-8 py-6 text-lg rounded-md"
+              >
                 Learn More
               </button>
             </div>
@@ -243,7 +255,10 @@ export default function Landing() {
             reduce losses.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-green-600 hover:bg-gray-50 px-8 py-6 text-lg font-semibold rounded-md">
+            <button
+              onClick={onGetStarted}
+              className="bg-white text-green-600 hover:bg-gray-50 px-8 py-6 text-lg font-semibold rounded-md"
+            >
               Get Started Now
             </button>
             <button className="border border-white text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold rounded-md">

@@ -1,5 +1,11 @@
-import { router, publicProcedure } from '../trpc'
+import { FieldValue } from 'firebase-admin/firestore'
 import { z } from 'zod'
+
+import { db } from '../../rag/firebase.js'
+import { askRag } from '../../rag/index.js'
+import { publicProcedure, router } from '../trpc'
+
+const ADVICE_COLLECTION = 'advice'
 
 export const adviceRouter = router({
   askAI: publicProcedure
@@ -8,34 +14,43 @@ export const adviceRouter = router({
         query: z.string().min(3, 'Query must be at least 3 characters'),
         userId: z.string().optional(),
         language: z.string().optional().default('en'),
+        /** Optionally restrict retrieval to specific knowledge-base doc IDs */
+        knowledgeBaseDocs: z.array(z.string()).optional().default([]),
       })
     )
     .mutation(async ({ input }) => {
-      // TODO: Implement RAG engine integration
-      // This will:
-      // 1. Convert query to embedding using Vertex AI
-      // 2. Query Vector Database for relevant documents
-      // 3. Construct augmented prompt
-      // 4. Call Gemini API with augmented prompt
-      // 5. Store advice in Firestore
-
-      return {
-        id: '1',
-        userId: input.userId || 'anonymous',
-        queryText: input.query,
-        responseText: 'This is a placeholder response. The RAG engine will be integrated here.',
-        sourcedDocuments: [],
-        createdAt: new Date(),
-      }
+      return await askRag({
+        query: input.query,
+        userId: input.userId,
+        language: input.language,
+        knowledgeBaseDocs: input.knowledgeBaseDocs,
+      })
     }),
 
   getAdviceHistory: publicProcedure
     .input(z.object({ userId: z.string().min(1) }))
-    .query(async () => {
-      // TODO: Fetch advice history from Firestore
-      return {
-        advice: [],
-      }
+    .query(async ({ input }) => {
+      const snapshot = await db
+        .collection(ADVICE_COLLECTION)
+        .where('userId', '==', input.userId)
+        .orderBy('createdAt', 'desc')
+        .limit(20)
+        .get()
+
+      const advice = snapshot.docs.map(doc => {
+        const data = doc.data()
+        return {
+          id: doc.id,
+          userId: data['userId'] as string,
+          queryText: data['queryText'] as string,
+          responseText: data['responseText'] as string,
+          sourcedDocuments: (data['sourcedDocuments'] as string[]) ?? [],
+          feedback: data['feedback'] as 'helpful' | 'not_helpful' | undefined,
+          createdAt: (data['createdAt'] as { toDate(): Date })?.toDate() ?? new Date(),
+        }
+      })
+
+      return { advice }
     }),
 
   submitFeedback: publicProcedure
@@ -45,8 +60,11 @@ export const adviceRouter = router({
         feedback: z.enum(['helpful', 'not_helpful']),
       })
     )
-    .mutation(async () => {
-      // TODO: Update advice feedback in Firestore
+    .mutation(async ({ input }) => {
+      await db.collection(ADVICE_COLLECTION).doc(input.adviceId).update({
+        feedback: input.feedback,
+        feedbackAt: FieldValue.serverTimestamp(),
+      })
       return { success: true }
     }),
 })

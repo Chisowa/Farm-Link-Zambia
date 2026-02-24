@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Knowledge Base ────────────────────────────────────────────────────────
+    // Agricultural documents ingested by the RAG pipeline (ZARI bulletins, etc.)
+    // Read by authenticated users; writes are admin/function-only via service account
+    match /knowledge_base/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+
+      match /chunks/{chunkId} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+    }
+
+    // ── Users ─────────────────────────────────────────────────────────────────
+    // Each user can only read/write their own profile document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Advice (AI query history) ─────────────────────────────────────────────
+    // Users can read their own advice records; only Cloud Functions write here
+    match /advice/{adviceId} {
+      allow read: if request.auth != null
+        && request.auth.uid == resource.data.userId;
+      allow write: if false;
+    }
+
+    // ── Crops ─────────────────────────────────────────────────────────────────
+    match /crops/{cropId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ── Pests ─────────────────────────────────────────────────────────────────
+    match /pests/{pestId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ── Diseases ──────────────────────────────────────────────────────────────
+    match /diseases/{diseaseId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ── Weather data ──────────────────────────────────────────────────────────
+    match /weatherData/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // ── Market prices ─────────────────────────────────────────────────────────
+    match /marketPrices/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}

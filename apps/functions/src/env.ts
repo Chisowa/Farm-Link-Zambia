@@ -1,12 +1,21 @@
 import { z } from 'zod'
 
 const EnvSchema = z.object({
-  FIREBASE_PROJECT_ID: z.string(),
-  FIREBASE_PRIVATE_KEY: z.string(),
-  FIREBASE_CLIENT_EMAIL: z.string(),
-  GOOGLE_CLOUD_PROJECT: z.string(),
+  // ── Firebase Admin ────────────────────────────────────────────────────────
+  FIREBASE_PROJECT_ID: z.string().default('farmlink-zambia'),
+  FIREBASE_PRIVATE_KEY: z.string().optional(),
+  FIREBASE_CLIENT_EMAIL: z.string().optional(),
+
+  // ── Google Cloud / Vertex AI ──────────────────────────────────────────────
+  GOOGLE_CLOUD_PROJECT: z.string().default('farmlink-zambia'),
   VERTEX_AI_LOCATION: z.string().default('us-central1'),
-  VERTEX_AI_MODEL_ID: z.string().default('gemini-pro'),
+  /** Gemini model — gemini-2.0-flash-001 for speed/cost balance */
+  VERTEX_AI_MODEL_ID: z.string().default('gemini-2.0-flash-001'),
+
+  // ── GCS bucket ────────────────────────────────────────────────────────────
+  GCS_BUCKET: z.string().default('famlinkdocs'),
+
+  // ── Runtime ───────────────────────────────────────────────────────────────
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 })
 

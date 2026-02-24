@@ -1,0 +1,6 @@
+export { askRag } from './ragEngine.js'
+export type { RagRequest, RagResponse } from './ragEngine.js'
+export { retrieveRelevantChunks, formatContext } from './retrieval.js'
+export { generateQueryEmbedding, generateEmbeddings } from './embeddings.js'
+export { generateAdvice } from './gemini.js'
+export { db } from './firebase.js'

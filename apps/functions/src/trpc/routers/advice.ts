@@ -67,4 +67,22 @@ export const adviceRouter = router({
       })
       return { success: true }
     }),
+
+  clearHistory: publicProcedure
+    .input(z.object({ userId: z.string().min(1) }))
+    .mutation(async ({ input }) => {
+      const snapshot = await db
+        .collection(ADVICE_COLLECTION)
+        .where('userId', '==', input.userId)
+        .get()
+
+      const docs = snapshot.docs
+      for (let i = 0; i < docs.length; i += 500) {
+        const batch = db.batch()
+        docs.slice(i, i + 500).forEach(doc => batch.delete(doc.ref))
+        await batch.commit()
+      }
+
+      return { deleted: docs.length }
+    }),
 })

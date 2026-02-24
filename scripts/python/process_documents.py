@@ -36,11 +36,12 @@ REGION = "us-central1"
 
 EMBEDDING_MODEL = "text-embedding-004"
 EMBEDDING_DIMENSION = 768   # cost-optimised (vs 1536)
-BATCH_SIZE = 20             # max chunks per Vertex AI call
+BATCH_SIZE = 5              # max chunks per Vertex AI call (low to stay under 20k token limit)
 MAX_TOKENS_PER_CHUNK = 500
 OVERLAP_TOKENS = 50
 
 FIRESTORE_COLLECTION = "knowledge_base"
+FIRESTORE_WRITE_BATCH = 50  # max ops per Firestore batch commit (keeps each commit < 10 MiB)
 
 # ── GCP clients ───────────────────────────────────────────────────────────────
 storage_client = storage.Client(project=PROJECT_ID)
@@ -184,11 +185,11 @@ def store_document(
         )
         count += 1
 
-        if count >= 500:
+        if count >= FIRESTORE_WRITE_BATCH:
             batch.commit()
             batch = firestore_client.batch()
             count = 0
-            print(f"    Committed 500-chunk batch...")
+            print(f"    Committed {FIRESTORE_WRITE_BATCH}-chunk batch...")
 
     if count:
         batch.commit()

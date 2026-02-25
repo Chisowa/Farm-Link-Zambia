@@ -37,8 +37,10 @@ Guidelines:
 }
 
 /** Build the full augmented prompt from query + retrieved context. */
-function buildPrompt(query: string, context: string): string {
+function buildPrompt(query: string, context: string, language?: string): string {
   const hasContext = context && context !== 'No relevant agricultural documents found.'
+  const langInstruction =
+    language && language !== 'en' ? `\n\nIMPORTANT: Respond in language code "${language}".` : ''
 
   return hasContext
     ? `CONTEXT (from Farm-Link Zambia agricultural knowledge base):
@@ -51,14 +53,14 @@ ${query}
 
 ---
 
-Answer the farmer's question using the context above. Cite the source document where possible.`
+Answer the farmer's question using the context above. Cite the source document where possible.${langInstruction}`
     : `FARMER'S QUESTION:
 ${query}
 
 ---
 
 No documents were found in the knowledge base for this topic.
-Please answer using your expert knowledge of Zambian smallholder farming practices.`
+Please answer using your expert knowledge of Zambian smallholder farming practices.${langInstruction}`
 }
 
 export interface GeminiResponse {
@@ -67,14 +69,18 @@ export interface GeminiResponse {
 }
 
 /** Call Gemini and return the generated text. */
-export async function generateAdvice(query: string, context: string): Promise<GeminiResponse> {
+export async function generateAdvice(
+  query: string,
+  context: string,
+  language?: string
+): Promise<GeminiResponse> {
   const model = vertexAI.getGenerativeModel({
     model: env.VERTEX_AI_MODEL_ID,
     systemInstruction: buildSystemInstruction(),
     generationConfig: GENERATION_CONFIG,
   })
 
-  const prompt = buildPrompt(query, context)
+  const prompt = buildPrompt(query, context, language)
 
   const result = await model.generateContent(prompt)
   const response = result.response

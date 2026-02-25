@@ -11,7 +11,10 @@ export const adviceRouter = router({
   askAI: publicProcedure
     .input(
       z.object({
-        query: z.string().min(3, 'Query must be at least 3 characters'),
+        query: z
+          .string()
+          .min(3, 'Query must be at least 3 characters')
+          .max(1000, 'Query must not exceed 1000 characters'),
         userId: z.string().optional(),
         language: z.string().optional().default('en'),
         /** Optionally restrict retrieval to specific knowledge-base doc IDs */

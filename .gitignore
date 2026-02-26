@@ -80,6 +80,7 @@ firestore-debug.log
 ui-debug.log
 pubsub-debug.log
 database-debug.log
+apps/web/src/lib/firebase.ts
 
 # =============================================================================
 # OTHER

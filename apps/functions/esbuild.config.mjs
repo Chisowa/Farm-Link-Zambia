@@ -10,7 +10,7 @@ await build({
   bundle: true,
   platform: 'node',
   target: 'node20',
-  format: 'esm',
+  format: 'cjs',
   outfile: resolve(__dirname, 'lib/index.js'),
   // firebase-admin and firebase-functions are provided by the Firebase runtime
   external: ['firebase-admin', 'firebase-functions'],

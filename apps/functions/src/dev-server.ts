@@ -17,6 +17,7 @@ import express from 'express'
 import cors from 'cors'
 import { createExpressMiddleware } from '@trpc/server/adapters/express'
 import { appRouter } from './trpc/router.js'
+import { createContext } from './trpc/trpc.js'
 
 const PORT = process.env.PORT ?? 3001
 
@@ -27,7 +28,7 @@ app.use(
   '/trpc',
   createExpressMiddleware({
     router: appRouter,
-    createContext: () => ({}),
+    createContext,
   })
 )
 

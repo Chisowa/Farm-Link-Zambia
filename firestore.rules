@@ -21,12 +21,20 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // ── Advice (AI query history) ─────────────────────────────────────────────
-    // Users can read their own advice records; only Cloud Functions write here
+    // ── Advice (AI chat history) ───────────────────────────────────────────────
+    // Cloud Functions (Admin SDK) create records — client cannot create.
+    // Users can read and delete their own history.
+    // Users can update only the feedback fields (thumbs up / down).
     match /advice/{adviceId} {
       allow read: if request.auth != null
-        && request.auth.uid == resource.data.userId;
-      allow write: if false;
+        && resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['feedback', 'feedbackAt']);
+      allow create: if false;
     }
 
     // ── Crops ─────────────────────────────────────────────────────────────────

@@ -80,6 +80,12 @@ firestore-debug.log
 ui-debug.log
 pubsub-debug.log
 database-debug.log
+# Firebase Functions TypeScript build output
+apps/functions/lib/
+# Service account key files — NEVER commit these
+serviceAccountKey*.json
+*serviceAccount*.json
+*service-account*.json
 
 # =============================================================================
 # PYTHON

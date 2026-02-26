@@ -17,11 +17,6 @@
       ]
     },
     {
-      "collectionGroup": "chunks",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [{ "fieldPath": "chunkIndex", "order": "ASCENDING" }]
-    },
-    {
       "collectionGroup": "marketPrices",
       "queryScope": "COLLECTION",
       "fields": [

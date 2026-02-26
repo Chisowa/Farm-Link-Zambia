@@ -98,6 +98,58 @@ git commit -m "chore: update ingestion batch size"
 
 ---
 
+## Running the Project Locally
+
+### Step 1 — Fix Python virtual environment (run once if broken)
+
+```bash
+# From scripts/python/
+deactivate
+rm -rf ../../.venv
+py -3.13 -m venv ../../.venv
+source ../../.venv/Scripts/activate
+pip install -r requirements.txt
+```
+
+### Step 2 — Authenticate with Google Cloud (run once per machine)
+
+```bash
+gcloud auth application-default login
+gcloud auth application-default set-quota-project farmlink-zambia
+```
+
+### Step 3 — Run the ingestion pipeline (after uploading PDFs to GCS)
+
+```bash
+# From scripts/python/
+python process_documents.py --folder agricultural-docs
+```
+
+### Step 4 — Start the backend (terminal 1)
+
+```bash
+pnpm --filter @repo/functions dev:server
+# API running at http://localhost:3001
+# Health check: http://localhost:3001/health
+```
+
+### Step 5 — Start the frontend (terminal 2)
+
+```bash
+pnpm --filter web dev
+# App running at http://localhost:5173
+```
+
+### If port 3001 is already in use
+
+```bash
+# Find and kill the process blocking the port
+netstat -ano | grep ":3001"         # note the PID in the last column
+taskkill //PID <PID> //F            # replace <PID> with the number found above
+```
+
+---
+
 ## Daily Workflow
 
 ```bash

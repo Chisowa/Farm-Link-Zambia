@@ -1,44 +1,111 @@
-import './style.css'
-import { useState } from 'react'
-import AuthPage from './components/auth/AuthPage'
-import Dashboard from './components/Dashboard'
-import Landing from './components/Landing'
-import { useAuth } from './contexts/AuthContext'
+/**
+ * =============================================================================
+ * WELCOME TO FARM-LINK ZAMBIA
+ * =============================================================================
+ *
+ * A production-ready monorepo built with modern technologies:
+ * - React + Vite for fast development
+ * - TypeScript for type safety
+ * - Tailwind CSS + Shadcn UI for beautiful components
+ * - tRPC for type-safe APIs
+ * - TanStack Query for server state management
+ * - Zod for data validation
+ * - Firebase for authentication and data storage
+ * - Vertex AI for agricultural advisory
+ *
+ * =============================================================================
+ */
 
-type View = 'landing' | 'auth' | 'dashboard'
+import './style.css'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import { NavigationProvider, useNavigation } from './context/NavigationContext'
+import { ThemeProvider } from './context/ThemeContext'
+import { QueryProvider } from './providers/QueryProvider'
+
+// Auth Pages
+import { LoginPage, SignupPage, ProfilePage } from './components/auth'
+
+// Feature Pages
+import { DashboardPage, AdvisoryPage, CropsPage, WeatherPage } from './components/features'
+
+// Landing Page
+import Landing from './components/Landing'
+
+// Shared Components
+import { LoadingPage } from './components/forms/StateComponents'
 
 /**
- * Root component — drives top-level routing via auth state.
- *
- * landing  → public marketing page (no auth required)
- * auth     → login / register page
- * dashboard → protected main app (requires Firebase auth)
+ * App Content - Routes based on authentication state
  */
-export function App() {
-  const { user, loading } = useAuth()
-  const [view, setView] = useState<View>('landing')
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth()
+  const { currentPage, navigateTo } = useNavigation()
 
-  // Full-screen spinner while Firebase resolves the auth state
-  if (loading) {
+  // Loading screen while checking auth state
+  if (isLoading) {
+    return <LoadingPage />
+  }
+
+  // If authenticated, show the requested page
+  if (isAuthenticated) {
+    switch (currentPage) {
+      case 'dashboard':
+        return <DashboardPage />
+      case 'advisory':
+        return <AdvisoryPage />
+      case 'crops':
+        return <CropsPage />
+      case 'weather':
+        return <WeatherPage />
+      case 'profile':
+        return <ProfilePage />
+      // If they're authenticated but on landing/login/signup, show dashboard
+      case 'landing':
+      case 'login':
+      case 'signup':
+      default:
+        return <DashboardPage />
+    }
+  }
+
+  // Not authenticated - show login/signup/landing
+  if (currentPage === 'signup') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <span className="text-4xl block mb-4">🌾</span>
-          <div className="w-8 h-8 border-3 border-green-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-gray-500 text-sm mt-3">Loading Farm-Link Zambia…</p>
-        </div>
-      </div>
+      <SignupPage
+        onSignupSuccess={() => navigateTo('dashboard')}
+        onLoginClick={() => navigateTo('login')}
+      />
     )
   }
 
-  // If user is already authenticated, show the dashboard
-  if (user) return <Dashboard />
-
-  // Auth page (login / register)
-  if (view === 'auth') {
-    return <AuthPage onSuccess={() => setView('dashboard')} />
+  if (currentPage === 'login') {
+    return (
+      <LoginPage
+        onLoginSuccess={() => navigateTo('dashboard')}
+        onSignupClick={() => navigateTo('signup')}
+      />
+    )
   }
 
-  // Default: landing page with "Get Started" → auth
-  return <Landing onGetStarted={() => setView('auth')} />
+  // Default to landing for unauthenticated users
+  return (
+    <Landing onLoginClick={() => navigateTo('login')} onSignupClick={() => navigateTo('signup')} />
+  )
+}
+
+/**
+ * Main App Component - Farm-Link Zambia
+ */
+export function App() {
+  return (
+    <ThemeProvider>
+      <QueryProvider>
+        <AuthProvider>
+          <NavigationProvider>
+            <AppContent />
+          </NavigationProvider>
+        </AuthProvider>
+      </QueryProvider>
+    </ThemeProvider>
+  )
 }

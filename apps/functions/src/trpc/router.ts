@@ -1,10 +1,10 @@
-import { router } from './trpc'
-import { userRouter } from './routers/user'
-import { cropsRouter } from './routers/crops'
-import { adviceRouter } from './routers/advice'
-import { weatherRouter } from './routers/weather'
-import { pestsRouter } from './routers/pests'
-import { diseasesRouter } from './routers/diseases'
+import { router } from './trpc.js'
+import { userRouter } from './routers/user.js'
+import { cropsRouter } from './routers/crops.js'
+import { adviceRouter } from './routers/advice.js'
+import { weatherRouter } from './routers/weather.js'
+import { pestsRouter } from './routers/pests.js'
+import { diseasesRouter } from './routers/diseases.js'
 
 export const appRouter = router({
   user: userRouter,

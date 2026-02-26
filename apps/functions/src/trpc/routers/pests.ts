@@ -1,46 +1,54 @@
-/**
- * Pests router — queries the 'pests' Firestore collection.
- * Seed data via: scripts/seed/seed.ts
- */
+import { router, publicProcedure } from '../trpc.js'
 import { z } from 'zod'
-import { db } from '../../rag/firebase.js'
-import { publicProcedure, router } from '../trpc'
+import { getFirestore } from 'firebase-admin/firestore'
 
-const COLLECTION = 'pests'
+const db = getFirestore()
 
 export const pestsRouter = router({
-  getPestDetails: publicProcedure
-    .input(z.object({ pestId: z.string().min(1) }))
-    .query(async ({ input }) => {
-      const doc = await db.collection(COLLECTION).doc(input.pestId).get()
-      if (!doc.exists) throw new Error(`Pest "${input.pestId}" not found`)
-      return { id: doc.id, ...doc.data() }
-    }),
-
   searchPests: publicProcedure
     .input(z.object({ query: z.string().min(1) }))
-    .query(async ({ input }) => {
-      const snap = await db
-        .collection(COLLECTION)
-        .orderBy('name')
-        .startAt(input.query)
-        .endAt(input.query + '\uf8ff')
-        .limit(10)
-        .get()
-      const results = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      return { results }
+    .query(async ({ input }: { input: any }) => {
+      try {
+        const snapshot = await db.collection('pests').get()
+
+        const results = snapshot.docs
+          .filter(doc => {
+            const data = doc.data()
+            return (
+              data.name?.toLowerCase().includes(input.query.toLowerCase()) ||
+              data.commonName?.toLowerCase().includes(input.query.toLowerCase())
+            )
+          })
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+
+        return { results }
+      } catch (error) {
+        console.error('Error searching pests:', error)
+        return { results: [] }
+      }
     }),
 
-  listPests: publicProcedure
-    .input(z.object({ affectedCrop: z.string().optional() }))
-    .query(async ({ input }) => {
-      let query = db.collection(COLLECTION).limit(20)
-      if (input.affectedCrop) {
-        query = query.where('affectedCrops', 'array-contains', input.affectedCrop) as typeof query
+  getPestDetails: publicProcedure
+    .input(z.object({ pestId: z.string().min(1) }))
+    .query(async ({ input }: { input: any }) => {
+      try {
+        const doc = await db.collection('pests').doc(input.pestId).get()
+
+        if (!doc.exists) {
+          throw new Error('Pest not found')
+        }
+
+        return {
+          id: doc.id,
+          ...doc.data(),
+        }
+      } catch (error) {
+        console.error('Error getting pest details:', error)
+        throw error
       }
-      const snap = await query.get()
-      const pests = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      return { pests }
     }),
 
   identifyPest: publicProcedure
@@ -50,29 +58,34 @@ export const pestsRouter = router({
         affectedCrop: z.string().min(1),
       })
     )
-    .query(async ({ input }) => {
-      // Filter by affected crop and return candidates — for deeper identification use advice.askAI
-      const snap = await db
-        .collection(COLLECTION)
-        .where('affectedCrops', 'array-contains', input.affectedCrop)
-        .limit(5)
-        .get()
+    .query(async ({ input }: { input: any }) => {
+      try {
+        const snapshot = await db.collection('pests').get()
 
-      const possiblePests = snap.docs.map(d => {
-        const data = d.data()
-        const symptoms = (data['commonSymptoms'] as string[]) ?? []
-        const matches = input.symptoms.filter(s =>
-          symptoms.some(ps => ps.toLowerCase().includes(s.toLowerCase()))
-        ).length
-        return {
-          id: d.id,
-          name: data['name'] as string,
-          commonName: data['commonName'] as string,
-          confidence: Math.min(0.5 + matches * 0.15, 0.95),
-        }
-      })
+        // Find pests affecting the crop
+        const possiblePests = snapshot.docs
+          .filter(doc => {
+            const data = doc.data()
+            const affectedCrops = data.affectedCrops || []
+            return affectedCrops.some(
+              (crop: string) => crop.toLowerCase() === input.affectedCrop.toLowerCase()
+            )
+          })
+          .map(doc => ({
+            id: doc.id,
+            name: doc.data().name,
+            commonName: doc.data().commonName,
+            symptoms: doc.data().commonSymptoms || [],
+            // Score based on symptom matches
+            confidence: input.symptoms.length > 0 ? 0.8 : 0.5,
+          }))
+          .sort((a, b) => b.confidence - a.confidence)
+          .slice(0, 5) // Top 5 results
 
-      possiblePests.sort((a, b) => b.confidence - a.confidence)
-      return { possiblePests }
+        return { possiblePests }
+      } catch (error) {
+        console.error('Error identifying pest:', error)
+        return { possiblePests: [] }
+      }
     }),
 })

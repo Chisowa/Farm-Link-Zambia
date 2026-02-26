@@ -1,17 +1,17 @@
-export { UserSchema, CreateUserSchema } from './user'
-export type { User, CreateUser } from './user'
+export { UserSchema, CreateUserSchema } from './user.js'
+export type { User, CreateUser } from './user.js'
 
-export { CropSchema, CreateCropSchema } from './crop'
-export type { Crop, CreateCrop } from './crop'
+export { CropSchema, CreateCropSchema } from './crop.js'
+export type { Crop, CreateCrop } from './crop.js'
 
-export { AdviceSchema, CreateAdviceSchema, AdviceQuerySchema } from './advice'
-export type { Advice, CreateAdvice, AdviceQuery } from './advice'
+export { AdviceSchema, CreateAdviceSchema, AdviceQuerySchema } from './advice.js'
+export type { Advice, CreateAdvice, AdviceQuery } from './advice.js'
 
-export { PestSchema, CreatePestSchema } from './pest'
-export type { Pest, CreatePest } from './pest'
+export { PestSchema, CreatePestSchema } from './pest.js'
+export type { Pest, CreatePest } from './pest.js'
 
-export { DiseaseSchema, CreateDiseaseSchema } from './disease'
-export type { Disease, CreateDisease } from './disease'
+export { DiseaseSchema, CreateDiseaseSchema } from './disease.js'
+export type { Disease, CreateDisease } from './disease.js'
 
-export { WeatherDataSchema, WeatherQuerySchema } from './weather'
-export type { WeatherData, WeatherQuery } from './weather'
+export { WeatherDataSchema, WeatherQuerySchema } from './weather.js'
+export type { WeatherData, WeatherQuery } from './weather.js'

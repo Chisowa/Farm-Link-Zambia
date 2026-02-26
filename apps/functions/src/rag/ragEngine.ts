@@ -12,8 +12,6 @@
  *   5. Persist the advice record in Firestore
  *   6. Return structured response
  */
-import { FieldValue } from 'firebase-admin/firestore'
-
 import { db } from './firebase.js'
 import { generateAdvice } from './gemini.js'
 import { formatContext, retrieveRelevantChunks } from './retrieval.js'
@@ -39,19 +37,28 @@ export interface RagResponse {
 }
 
 export async function askRag(request: RagRequest): Promise<RagResponse> {
-  const { query, userId = 'anonymous', knowledgeBaseDocs = [] } = request
+  const { query, userId = 'anonymous', language, knowledgeBaseDocs = [] } = request
 
   // ── Step 1 & 2: Retrieve relevant chunks ─────────────────────────────────
   const chunks = await retrieveRelevantChunks(query, knowledgeBaseDocs, 8)
+  console.log(
+    `Retrieved ${chunks.length} chunks, sources: ${[...new Set(chunks.map(c => c.docName))]}`
+  )
+  if (chunks.length > 0) {
+    console.log(
+      `Top chunk similarity: ${chunks[0].similarity.toFixed(3)}, doc: ${chunks[0].docName}`
+    )
+  }
 
   // ── Step 3: Format context ────────────────────────────────────────────────
   const context = formatContext(chunks)
   const sourcedDocuments = [...new Set(chunks.map(c => c.docName))]
 
   // ── Step 4: Generate answer ───────────────────────────────────────────────
-  const { text: responseText, modelUsed } = await generateAdvice(query, context)
+  const { text: responseText, modelUsed } = await generateAdvice(query, context, language)
 
   // ── Step 5: Persist advice record ─────────────────────────────────────────
+  const createdAt = new Date()
   const adviceRef = db.collection(ADVICE_COLLECTION).doc()
   await adviceRef.set({
     userId,
@@ -59,7 +66,7 @@ export async function askRag(request: RagRequest): Promise<RagResponse> {
     responseText,
     sourcedDocuments,
     modelUsed,
-    createdAt: FieldValue.serverTimestamp(),
+    createdAt,
   })
 
   // ── Step 6: Return ────────────────────────────────────────────────────────
@@ -70,6 +77,6 @@ export async function askRag(request: RagRequest): Promise<RagResponse> {
     responseText,
     sourcedDocuments,
     modelUsed,
-    createdAt: new Date(),
+    createdAt,
   }
 }

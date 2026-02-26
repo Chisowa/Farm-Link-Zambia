@@ -1,14 +1,15 @@
 import { createTRPCReact } from '@trpc/react-query'
 import { httpBatchLink } from '@trpc/client'
-import type { AppRouter } from '@repo/functions/router'
-import { env } from '../env'
+import type { AppRouter } from '@repo/functions'
+
+export type { AppRouter }
 
 export const trpc = createTRPCReact<AppRouter>()
 
 export const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: `${env.VITE_TRPC_API_URL}/trpc`,
+      url: import.meta.env.VITE_API_URL || 'http://localhost:5001/api/trpc',
     }),
   ],
 })

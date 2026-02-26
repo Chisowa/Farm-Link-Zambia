@@ -11,6 +11,7 @@ import { generateQueryEmbedding } from './embeddings.js'
 
 export const KNOWLEDGE_BASE_COLLECTION = 'knowledge_base'
 const DEFAULT_TOP_K = 8
+const MIN_SIMILARITY = 0.4
 
 export interface RetrievedChunk {
   text: string
@@ -87,20 +88,21 @@ export async function retrieveRelevantChunks(
     return []
   }
 
-  // 3. Load chunks + compute similarity
-  const scored: RetrievedChunk[] = []
+  // 3. Load all documents in parallel, then compute similarity
+  const allChunksArrays = await Promise.all(docNames.map(loadDocumentChunks))
 
-  for (const docName of docNames) {
-    const chunks = await loadDocumentChunks(docName)
-    for (const chunk of chunks) {
+  const scored: RetrievedChunk[] = []
+  for (let i = 0; i < docNames.length; i++) {
+    const docName = docNames[i]
+    for (const chunk of allChunksArrays[i]) {
       const similarity = cosineSimilarity(queryEmbedding, chunk.embedding)
       scored.push({ text: chunk.text, page: chunk.page, docName, similarity })
     }
   }
 
-  // 4. Sort descending and return top-K
+  // 4. Sort descending, drop low-relevance chunks, return top-K
   scored.sort((a, b) => b.similarity - a.similarity)
-  return scored.slice(0, topK)
+  return scored.filter(c => c.similarity >= MIN_SIMILARITY).slice(0, topK)
 }
 
 /** Format retrieved chunks into a context string for the LLM prompt. */

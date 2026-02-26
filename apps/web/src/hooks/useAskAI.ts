@@ -24,3 +24,10 @@ export function useAdviceHistory(userId: string) {
 export function useSubmitFeedback() {
   return trpc.advice.submitFeedback.useMutation()
 }
+
+/**
+ * Hook to delete all advice history for a user.
+ */
+export function useClearHistory() {
+  return trpc.advice.clearHistory.useMutation()
+}

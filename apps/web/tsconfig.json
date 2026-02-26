@@ -6,7 +6,8 @@
     "types": ["vitest/globals"],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@repo/functions": ["../../apps/functions/src"]
     }
   },
   "include": ["src", "vite.config.ts"]

@@ -1,43 +1,35 @@
 /**
- * Farm-Link Zambia — Firebase Cloud Functions entry point
+ * Farm-Link Zambia - Firebase Cloud Functions Entry Point
  *
- * Exposes the tRPC router as an HTTP Cloud Function named `api`.
- * URL: https://us-central1-farmlink-zambia.cloudfunctions.net/api/trpc/<procedure>
- *
- * Local development:
- *   firebase emulators:start --only functions
- *   → http://localhost:5001/farmlink-zambia/us-central1/api/trpc
+ * This file exports the tRPC API as a Cloud Function HTTP handler.
+ * Deploy with: firebase deploy --only functions:api
  */
 
-// Re-export router types so apps/web can import them
-export { appRouter, type AppRouter } from './trpc/router'
+import * as functions from 'firebase-functions'
+import { createHTTPHandler } from '@trpc/server/adapters/standalone'
+import { appRouter } from './trpc/router.js'
 
-// ── Firebase Cloud Function — tRPC HTTP endpoint ─────────────────────────────
-// Requires: pnpm --filter @repo/functions add firebase-functions express cors
-//           pnpm --filter @repo/functions add -D @types/express @types/cors
-// Both packages are in package.json; run `pnpm install` after network is stable.
-//
-// URL patterns:
-//   Emulator:   http://localhost:5001/farmlink-zambia/us-central1/api/trpc/<procedure>
-//   Production: https://farmlink-zambia.web.app/api/trpc/<procedure>
-//               (Firebase Hosting rewrites /api/trpc/** → this function)
-import { onRequest } from 'firebase-functions/v2/https'
-import express from 'express'
-import cors from 'cors'
-import { createExpressMiddleware } from '@trpc/server/adapters/express'
-import { appRouter } from './trpc/router'
+export type { AppRouter } from './trpc/router.js'
 
-const app = express()
-app.use(cors({ origin: true }))
-app.use(
-  '/trpc',
-  createExpressMiddleware({
-    router: appRouter,
-    createContext: () => ({}),
-  })
-)
+// Create tRPC HTTP handler
+const trpcHandler = createHTTPHandler({
+  router: appRouter,
+  createContext: () => ({}),
+})
 
-export const api = onRequest(
-  { cors: true, region: 'us-central1', memory: '512MiB', timeoutSeconds: 300 },
-  app
-)
+// Export as Cloud Function
+export const api = functions.https.onRequest(async (req, res) => {
+  // Enable CORS
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  res.set('Access-Control-Allow-Headers', 'Content-Type')
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('')
+    return
+  }
+
+  // Route tRPC requests
+  await trpcHandler(req, res)
+})

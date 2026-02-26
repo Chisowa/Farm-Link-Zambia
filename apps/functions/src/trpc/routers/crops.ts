@@ -1,37 +1,57 @@
-/**
- * Crops router — queries the 'crops' Firestore collection.
- * Seed data via: scripts/seed/seed.ts
- */
+import { router, publicProcedure } from '../trpc.js'
 import { z } from 'zod'
-import { db } from '../../rag/firebase.js'
-import { publicProcedure, router } from '../trpc'
+import { getFirestore, Query, DocumentData, QueryDocumentSnapshot } from 'firebase-admin/firestore'
 
-const COLLECTION = 'crops'
+const db = getFirestore()
 
 export const cropsRouter = router({
   listCrops: publicProcedure
     .input(
       z.object({
-        limit: z.number().min(1).max(50).default(20),
-        season: z.string().optional(),
+        limit: z.number().default(10),
+        offset: z.number().default(0),
       })
     )
     .query(async ({ input }) => {
-      let query = db.collection(COLLECTION).limit(input.limit)
-      if (input.season) {
-        query = query.where('plantingSeasons', 'array-contains', input.season) as typeof query
+      try {
+        const snapshot = await db.collection('crops').limit(input.limit).offset(input.offset).get()
+
+        const crops = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+
+        return {
+          crops,
+          total: crops.length,
+        }
+      } catch (error) {
+        console.error('Error listing crops:', error)
+        return {
+          crops: [],
+          total: 0,
+        }
       }
-      const snap = await query.get()
-      const crops = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      return { crops }
     }),
 
   getCropDetails: publicProcedure
     .input(z.object({ cropId: z.string().min(1) }))
-    .query(async ({ input }) => {
-      const doc = await db.collection(COLLECTION).doc(input.cropId).get()
-      if (!doc.exists) throw new Error(`Crop "${input.cropId}" not found`)
-      return { id: doc.id, ...doc.data() }
+    .query(async ({ input }: { input: any }) => {
+      try {
+        const doc = await db.collection('crops').doc(input.cropId).get()
+
+        if (!doc.exists) {
+          throw new Error('Crop not found')
+        }
+
+        return {
+          id: doc.id,
+          ...doc.data(),
+        }
+      } catch (error) {
+        console.error('Error getting crop details:', error)
+        throw error
+      }
     }),
 
   getRecommendedCrops: publicProcedure
@@ -41,28 +61,25 @@ export const cropsRouter = router({
         season: z.string().optional(),
       })
     )
-    .query(async ({ input }) => {
-      let query = db.collection(COLLECTION).limit(6)
-      if (input.season) {
-        query = query.where('plantingSeasons', 'array-contains', input.season) as typeof query
-      }
-      const snap = await query.get()
-      const crops = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      return { crops }
-    }),
+    .query(async ({ input }: { input: any }) => {
+      try {
+        let query: Query<DocumentData> = db.collection('crops')
 
-  searchCrops: publicProcedure
-    .input(z.object({ query: z.string().min(1) }))
-    .query(async ({ input }) => {
-      // Simple prefix search on name field — use Algolia/Typesense for full-text in production
-      const snap = await db
-        .collection(COLLECTION)
-        .orderBy('name')
-        .startAt(input.query)
-        .endAt(input.query + '\uf8ff')
-        .limit(10)
-        .get()
-      const results = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      return { results }
+        // If season is provided, filter crops by planting season
+        if (input.season) {
+          query = query.where('plantingSeasons', 'array-contains', input.season)
+        }
+
+        const snapshot = await query.get()
+        const crops = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+
+        return { crops }
+      } catch (error) {
+        console.error('Error getting recommended crops:', error)
+        return { crops: [] }
+      }
     }),
 })

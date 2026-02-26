@@ -31,7 +31,7 @@ import { createContext } from './trpc/trpc'
 const app = express()
 app.use(cors({ origin: true }))
 app.use(
-  '/trpc',
+  '/api/trpc',
   createExpressMiddleware({
     router: appRouter,
     createContext,
